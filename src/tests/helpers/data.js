@@ -1,4 +1,4 @@
-const questionsResponse = {
+export const questionsResponse = {
     response_code: 0,
     results: [
       {
@@ -61,5 +61,18 @@ const questionsResponse = {
       },
     ],
   };
+
+  export const invalidTokenQuestionsResponse = {
+      response_code: 3,
+      results: [],
+  }
   
-export default questionsResponse;
+  export const initialState = {
+    player: {
+      name: 'Rykelmy',
+      assertions: 0,
+      score: 0,
+      gravatarEmail: 'ce11fce876c93ed5d2a72da660496473',
+      timer: 30,
+    },
+  };

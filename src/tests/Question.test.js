@@ -3,29 +3,51 @@ import React from 'react';
 import App from '../App';
 import renderWithRouterAndRedux from './helpers/renderWithRouterAndRedux';
 import { screen, waitFor } from '@testing-library/react';
-import questionsResponse from './helpers/data';
+import { questionsResponse, invalidTokenQuestionsResponse } from './helpers/data';
+
+const storageToken = 'd1fda0cfc2b63e40ef9ec06143f7328c9612fe303c1c9a63d46806ac7bfefeb5'
+const storageCode = '0'
 
 describe('test if the questions component', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+ })
+  it('test the local storage when code is 0', async () => {
 
-  it('test the local storage', async () => {
-    localStorage.setItem('token', 'anteteguemon');
-    localStorage.setItem('code', '1');
+    global.fetch = jest.fn(async () => ({
+      json: async () => questionsResponse
+    }));
 
     const { history } = renderWithRouterAndRedux(<App/>);
 
     const playButton = screen.getByRole('button', { name: 'Play' });
     userEvent.type(screen.getByTestId('input-gravatar-email'), 'alguem@email.com');
     userEvent.type(screen.getByTestId('input-player-name'), 'alguem');
-    console.log(localStorage.getItem('code'));
     userEvent.click(playButton);
-    console.log(localStorage.getItem('code'));
 
-    await waitFor(() => {
-      expect(JSON.parse(localStorage.getItem('token'))).toBe(null);
-      expect(history.location.pathname).toBe('/')
-    }, { timeout: 5000 })
+    const currentScoreText = await screen.findByText('Current score:')
+    const loggedAs = await screen.findByText('You are logged in as:');
+    expect(currentScoreText).toBeInTheDocument();
+    expect(loggedAs).toBeInTheDocument();
 
+    expect(localStorage.code).toBe(storageCode);
+    expect(history.location.pathname).toBe('/game');
   })
+
+  it('should test the invalid token in localStorage', async () => {
+    global.fetch = jest.fn(async () => ({
+      json: async () => invalidTokenQuestionsResponse
+    }));
+
+    const { history } = renderWithRouterAndRedux(<App/>);
+
+    const playButton = screen.getByRole('button', { name: 'Play' });
+    userEvent.type(screen.getByTestId('input-gravatar-email'), 'alguem@email.com');
+    userEvent.type(screen.getByTestId('input-player-name'), 'alguem');
+    userEvent.click(playButton);
+
+    expect(history.location.pathname).toBe('/');
+  });
 
   jest.useFakeTimers();
 
@@ -41,7 +63,6 @@ describe('test if the questions component', () => {
     userEvent.type(screen.getByTestId('input-gravatar-email'), 'alguem@email.com');
     userEvent.type(screen.getByTestId('input-player-name'), 'alguem');
     userEvent.click(playButton);
-    expect(localStorage.getItem('code')).toBe('0');
 
     const firstQuestion = await screen.findByText('The Republic of Malta is the smallest microstate worldwide.');
     const correctAnswer_1 = await screen.findByText('False');
